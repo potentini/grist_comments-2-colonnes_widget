@@ -14,18 +14,18 @@
 
   <style>
     :root {
-      --bg: #f4f7fa;
+      --bg: #f7f8fa;
       --surface: #ffffff;
-      --surface-2: #f8fafc;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --border: #dbe3ea;
-      --accent: #16B378;
-      --accent-dark: #0f9463;
+      --surface-2: #f3f5f7;
+      --text: #20242c;
+      --muted: #6d7480;
+      --border: #dde2e8;
+      --accent: #2e6edb;
+      --accent-dark: #245fc4;
       --danger: #b02a37;
       --warning: #8a6500;
       --info: #0056b3;
-      --shadow: 0 2px 6px rgba(0,0,0,0.07);
+      --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -67,19 +67,20 @@
       max-width: 1200px;
       margin: 0 auto;
       padding: 8px 10px 10px;
+      min-height: 100vh;
     }
 
     .widget-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
-      gap: 10px;
+      grid-template-columns: minmax(0, 1.45fr) minmax(170px, 0.9fr);
+      gap: 8px;
       align-items: start;
     }
 
     .panel {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       box-shadow: var(--shadow);
       overflow: hidden;
       min-width: 0;
@@ -90,15 +91,16 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 7px 10px;
-      background: var(--accent);
-      color: #fff;
+      padding: 9px 12px;
+      background: var(--surface);
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
       min-height: 36px;
     }
 
     .panel-title {
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -110,20 +112,29 @@
     }
 
     .messages-body {
-      padding: 8px;
-      max-height: calc(100vh - 40px);
+      padding: 10px;
+      max-height: calc(100vh - 32px);
       overflow: auto;
     }
 
     .composer-body {
-      padding: 8px;
+      padding: 10px;
+      height: calc(100vh - 32px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #chat .widget-grid > .panel:last-child {
+      position: sticky;
+      top: 8px;
     }
 
     .message-card {
       border: 1px solid var(--border);
       border-radius: 7px;
       background: var(--surface);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       overflow: hidden;
     }
 
@@ -141,7 +152,7 @@
       justify-content: space-between;
       gap: 8px;
       padding: 5px 8px;
-      background: var(--surface-2);
+      background: #f8f9fb;
       border-bottom: 1px solid var(--border);
     }
 
@@ -253,7 +264,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 6px;
+      margin-bottom: 2px;
     }
 
     .composer-title {
@@ -297,14 +308,15 @@
 
     .editor-shell {
       border: 1px solid var(--border);
-      border-radius: 7px;
+      border-radius: 8px;
       overflow: hidden;
       background: var(--surface);
     }
 
     .editor-container {
-      min-height: 110px;
-      max-height: 240px;
+      min-height: 130px;
+      max-height: none;
+      flex: 1;
       overflow: hidden;
       background: var(--surface);
     }
@@ -326,13 +338,13 @@
 
     .ql-container.ql-snow {
       border: none;
-      min-height: 110px;
-      max-height: 240px;
+      min-height: 130px;
+      max-height: none;
       overflow: auto;
     }
 
     .ql-editor {
-      min-height: 110px;
+      min-height: 130px;
       padding: 8px 10px;
       color: var(--text);
       font-size: 12px;
@@ -381,16 +393,6 @@
       color: #fff;
       cursor: pointer;
     }
-
-    @media (max-width: 900px) {
-      .widget-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .messages-body {
-        max-height: none;
-      }
-    }
   </style>
 </head>
 <body>
@@ -418,20 +420,13 @@
     <div class="widget-grid">
       <!-- Colonne gauche : messages -->
       <section class="panel">
-        <div class="panel-header">
-          <span id="messages-title" class="panel-title">Messages</span>
-        </div>
         <div id="msg-container" class="messages-body"></div>
       </section>
 
       <!-- Colonne droite : rédaction -->
       <section class="panel">
-        <div class="panel-header">
-          <span id="composer-panel-title" class="panel-title">Nouveau message</span>
-        </div>
         <div class="composer-body">
           <div class="composer-topbar">
-            <span id="new-title" class="composer-title">Nouveau message</span>
             <div class="composer-actions-inline">
               <button id="cancel-edit" class="secondary-btn" type="button">Annuler</button>
               <button id="toolbar-toggle" class="toolbar-toggle" type="button" title="Afficher / masquer la barre de mise en forme">Aa</button>
