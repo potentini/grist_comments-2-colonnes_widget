@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Messages</title>
+
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --bg: #f4f7fa;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe3ea;
+      --accent: #16B378;
+      --accent-dark: #0f9463;
+      --danger: #b02a37;
+      --warning: #8a6500;
+      --info: #0056b3;
+      --shadow: 0 2px 6px rgba(0,0,0,0.07);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #262633;
+        --surface: #32323F;
+        --surface-2: #2b2b37;
+        --text: #f3f4f6;
+        --muted: #c3c7d1;
+        --border: #4a4a59;
+        --shadow: 0 2px 6px rgba(0,0,0,0.22);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Liberation Sans, Helvetica, Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    #configuration {
+      max-width: 1200px;
+      margin: 12px auto;
+      padding: 0 10px;
+    }
+
+    #configuration h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .widget-shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 8px 10px 10px;
+    }
+
+    .widget-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 10px;
+      background: var(--accent);
+      color: #fff;
+      min-height: 36px;
+    }
+
+    .panel-title {
+      font-weight: 700;
+      font-size: 13px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .panel-body {
+      padding: 8px;
+    }
+
+    .messages-body {
+      padding: 8px;
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+    }
+
+    .composer-body {
+      padding: 8px;
+    }
+
+    .message-card {
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .message-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-card.resolved {
+      opacity: 0.92;
+    }
+
+    .message-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px 8px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .message-head-left,
+    .message-head-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .author {
+      font-weight: 700;
+      font-size: 12px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 260px;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface);
+      white-space: nowrap;
+    }
+
+    .date {
+      font-size: 10.5px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .message-body {
+      padding: 7px 8px 6px;
+    }
+
+    .card-message {
+      font-size: 12px;
+      line-height: 1.35;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .card-message p {
+      margin: 0 0 5px;
+    }
+
+    .card-message p:last-child {
+      margin-bottom: 0;
+    }
+
+    .card-message img {
+      max-width: 100%;
+      border-radius: 6px;
+    }
+
+    .card-actions {
+      margin-top: 6px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .msg-btn,
+    .toolbar-toggle,
+    .add-msg,
+    .secondary-btn {
+      height: 28px;
+      min-height: 28px;
+      padding: 0 9px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .msg-btn,
+    .toolbar-toggle,
+    .secondary-btn {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    .msg-btn.edit {
+      color: var(--info);
+    }
+
+    .msg-btn.resolve {
+      color: var(--warning);
+    }
+
+    .msg-btn.delete {
+      color: var(--danger);
+    }
+
+    .msg-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .composer-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .composer-title {
+      font-weight: 700;
+      font-size: 12.5px;
+      color: var(--text);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .composer-actions-inline {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .toolbar-toggle {
+      min-width: 32px;
+      padding: 0 8px;
+    }
+
+    .add-msg {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .add-msg:hover {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+    }
+
+    .secondary-btn {
+      display: none;
+    }
+
+    .editor-shell {
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .editor-container {
+      min-height: 110px;
+      max-height: 240px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .editor-toolbar-hidden .ql-toolbar {
+      display: none !important;
+    }
+
+    .editor-toolbar-hidden .ql-container {
+      border-top: none !important;
+    }
+
+    .ql-toolbar.ql-snow {
+      border: none;
+      border-bottom: 1px solid var(--border);
+      padding: 4px;
+      background: var(--surface-2);
+    }
+
+    .ql-container.ql-snow {
+      border: none;
+      min-height: 110px;
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    .ql-editor {
+      min-height: 110px;
+      padding: 8px 10px;
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .ql-editor.ql-blank::before {
+      color: var(--muted);
+      font-style: normal;
+    }
+
+    .ql-bubble * {
+      background: transparent;
+    }
+
+    .empty-state {
+      padding: 12px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+    }
+
+    #configuration .panel-body select,
+    #configuration input[type="submit"] {
+      font-size: 13px;
+    }
+
+    #configuration .panel-body select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    #configuration input[type="submit"] {
+      margin-top: 10px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      .widget-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .messages-body {
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <form id="configuration" style="display:none">
+    <h2>Message Widget Configuration</h2>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Select Quill theme</span>
+      </div>
+      <div class="panel-body">
+        <select name="quillTheme" id="quillTheme">
+          <option value="snow">Snow (menu de mise en forme)</option>
+          <option value="bubble">Bubble (infobulle de mise en forme)</option>
+          <option value="plain">Sans menu de mise en forme</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <input type="submit" value="Save">
+    </div>
+  </form>
+
+  <div id="chat" class="widget-shell">
+    <div class="widget-grid">
+      <!-- Colonne gauche : messages -->
+      <section class="panel">
+        <div class="panel-header">
+          <span id="messages-title" class="panel-title">Messages</span>
+        </div>
+        <div id="msg-container" class="messages-body"></div>
+      </section>
+
+      <!-- Colonne droite : rédaction -->
+      <section class="panel">
+        <div class="panel-header">
+          <span id="composer-panel-title" class="panel-title">Nouveau message</span>
+        </div>
+        <div class="composer-body">
+          <div class="composer-topbar">
+            <span id="new-title" class="composer-title">Nouveau message</span>
+            <div class="composer-actions-inline">
+              <button id="cancel-edit" class="secondary-btn" type="button">Annuler</button>
+              <button id="toolbar-toggle" class="toolbar-toggle" type="button" title="Afficher / masquer la barre de mise en forme">Aa</button>
+              <button id="send" class="add-msg" type="button">Envoyer</button>
+            </div>
+          </div>
+
+          <div id="editor-shell" class="editor-shell">
+            <div id="editor" class="editor-container"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
